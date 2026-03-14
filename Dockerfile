@@ -212,6 +212,5 @@ ENV NODE_ENV=production
 # Security hardening: Run as non-root user
 USER node
 
-HEALTHCHECK --interval=3m --timeout=10s --start-period=30s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT || '18789') + '/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
-CMD ["node", "openclaw.mjs", "gateway", "--allow-unconfigured", "--bind", "lan"]
+HEALTHCHECK NONE
+CMD ["sh", "-c", "node openclaw.mjs gateway --allow-unconfigured --bind lan --port ${PORT:-18789}"]
