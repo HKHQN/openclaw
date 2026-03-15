@@ -36,7 +36,7 @@ ENV PATH="/root/.bun/bin:${PATH}"
 RUN corepack enable
 
 # ✅ FIX OOM: 512MB thay vì 4096MB cho máy 1GB RAM
-ENV NODE_OPTIONS=--max-old-space-size=512
+ENV NODE_OPTIONS=--max-old-space-size=384
 
 WORKDIR /app
 
@@ -46,7 +46,7 @@ COPY patches ./patches
 
 COPY --from=ext-deps /out/ ./extensions/
 
-RUN NODE_OPTIONS=--max-old-space-size=512 pnpm install --frozen-lockfile
+RUN NODE_OPTIONS=--max-old-space-size=384 pnpm install --frozen-lockfile
 
 COPY . .
 
@@ -64,14 +64,14 @@ RUN pnpm canvas:a2ui:bundle || \
      echo "stub" > src/canvas-host/a2ui/.bundle.hash && \
      rm -rf vendor/a2ui apps/shared/OpenClawKit/Tools/CanvasA2UI)
 
-RUN NODE_OPTIONS=--max-old-space-size=512 pnpm build:docker
+RUN NODE_OPTIONS=--max-old-space-size=384 pnpm build:docker
 
 ENV OPENCLAW_PREFER_PNPM=1
-RUN NODE_OPTIONS=--max-old-space-size=512 pnpm ui:build
+RUN NODE_OPTIONS=--max-old-space-size=384 pnpm ui:build
 
 # ── Runtime assets ───────────────────────────────────────────────
 FROM build AS runtime-assets
-RUN NODE_OPTIONS=--max-old-space-size=512 CI=true pnpm prune --prod && \
+RUN NODE_OPTIONS=--max-old-space-size=384 CI=true pnpm prune --prod && \
     find dist -type f \( -name '*.d.ts' -o -name '*.d.mts' -o -name '*.d.cts' -o -name '*.map' \) -delete
 
 # ── Runtime base images ──────────────────────────────────────────
@@ -177,7 +177,7 @@ RUN ln -sf /app/openclaw.mjs /usr/local/bin/openclaw \
 
 ENV NODE_ENV=production
 # ✅ FIX OOM runtime: giới hạn heap 512MB
-ENV NODE_OPTIONS=--max-old-space-size=512
+ENV NODE_OPTIONS=--max-old-space-size=384
 
 USER node
 
