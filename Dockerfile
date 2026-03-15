@@ -175,9 +175,12 @@ RUN if [ -n "$OPENCLAW_INSTALL_DOCKER_CLI" ]; then \
 RUN ln -sf /app/openclaw.mjs /usr/local/bin/openclaw \
  && chmod 755 /app/openclaw.mjs
 
+# Fix permission: tạo /data/.openclaw và giao quyền cho user node
+RUN mkdir -p /data/.openclaw && chown -R node:node /data
+
 ENV NODE_ENV=production
-# ✅ FIX OOM runtime: giới hạn heap 512MB
 ENV NODE_OPTIONS=--max-old-space-size=384
+ENV OPENCLAW_DATA_DIR=/data/.openclaw
 
 USER node
 
