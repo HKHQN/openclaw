@@ -182,6 +182,7 @@ RUN ln -sf /app/openclaw.mjs /usr/local/bin/openclaw \
 ENV NODE_ENV=production
 ENV OPENCLAW_BIND=loopback
 ENV OPENCLAW_CONFIG_DIR=/home/node/.openclaw
+ENV HOME=/home/node
 ENV NODE_OPTIONS=--max-old-space-size=384
 ENV OPENCLAW_DATA_DIR=/home/node/.openclaw
 ENV PORT=18789
@@ -190,7 +191,7 @@ EXPOSE 18789
 
 USER node
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+HEALTHCHECK --interval=30s --timeout=15s --start-period=90s --retries=5 \
   CMD curl -f http://127.0.0.1:${PORT:-18789}/healthz || exit 1
 
-CMD ["sh", "-c", "node openclaw.mjs gateway --allow-unconfigured --port ${PORT:-18789}"]
+CMD ["sh", "-c", "node openclaw.mjs gateway --allow-unconfigured --bind loopback --port ${PORT:-18789}"]
