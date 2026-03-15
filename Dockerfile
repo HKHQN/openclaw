@@ -106,9 +106,9 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN chown node:node /app && \
-    mkdir -p /data/.openclaw && \
-    chown -R node:node /data && \
-    chmod -R 755 /data
+    mkdir -p /home/node/.openclaw && \
+    chown -R node:node /home/node && \
+    chmod -R 755 /home/node
 
 COPY --from=runtime-assets --chown=node:node /app/dist ./dist
 COPY --from=runtime-assets --chown=node:node /app/node_modules ./node_modules
@@ -180,10 +180,10 @@ RUN ln -sf /app/openclaw.mjs /usr/local/bin/openclaw \
 
 
 ENV NODE_ENV=production
-ENV OPENCLAW_CONFIG_DIR=/data/.openclaw
-ENV HOME=/data
+ENV OPENCLAW_BIND=loopback
+ENV OPENCLAW_CONFIG_DIR=/home/node/.openclaw
 ENV NODE_OPTIONS=--max-old-space-size=384
-ENV OPENCLAW_DATA_DIR=/data/.openclaw
+ENV OPENCLAW_DATA_DIR=/home/node/.openclaw
 ENV PORT=18789
 
 EXPOSE 18789
@@ -191,6 +191,6 @@ EXPOSE 18789
 USER node
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
-  CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT||'18789') + '/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+  CMD curl -f http://127.0.0.1:${PORT:-18789}/healthz || exit 1
 
-CMD ["sh", "-c", "node openclaw.mjs gateway --allow-unconfigured --bind auto --port ${PORT:-18789}"]
+CMD ["sh", "-c", "node openclaw.mjs gateway --allow-unconfigured --port ${PORT:-18789}"]
