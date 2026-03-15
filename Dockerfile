@@ -105,7 +105,10 @@ RUN apt-get update && \
       procps hostname curl git openssl && \
     rm -rf /var/lib/apt/lists/*
 
-RUN chown node:node /app
+RUN chown node:node /app && \
+    mkdir -p /data/.openclaw && \
+    chown -R node:node /data && \
+    chmod -R 755 /data
 
 COPY --from=runtime-assets --chown=node:node /app/dist ./dist
 COPY --from=runtime-assets --chown=node:node /app/node_modules ./node_modules
@@ -175,18 +178,19 @@ RUN if [ -n "$OPENCLAW_INSTALL_DOCKER_CLI" ]; then \
 RUN ln -sf /app/openclaw.mjs /usr/local/bin/openclaw \
  && chmod 755 /app/openclaw.mjs
 
-# Fix permission: tạo /data/.openclaw và giao quyền cho user node
-RUN mkdir -p /data/.openclaw && chown -R node:node /data
 
 ENV NODE_ENV=production
+ENV OPENCLAW_CONFIG_DIR=/data/.openclaw
+ENV HOME=/data
 ENV NODE_OPTIONS=--max-old-space-size=384
 ENV OPENCLAW_DATA_DIR=/data/.openclaw
+ENV PORT=18789
+
+EXPOSE 18789
 
 USER node
 
-# ✅ FIX HEALTHCHECK: dùng PORT từ Railway, tăng start-period lên 60s
-HEALTHCHECK --interval=3m --timeout=10s --start-period=60s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT||'18789') + '/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+  CMD node -e "fetch('http://0.0.0.0:' + (process.env.PORT||'18789') + '/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-# ✅ FIX BIND: --bind lan để Railway có thể kết nối được
-CMD ["sh", "-c", "node openclaw.mjs gateway --allow-unconfigured --bind lan --port ${PORT:-18789}"]
+CMD ["sh", "-c", "node openclaw.mjs gateway --allow-unconfigured --bind 0.0.0.0 --port ${PORT:-18789}"]
